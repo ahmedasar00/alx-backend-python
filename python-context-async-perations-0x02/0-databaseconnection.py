@@ -8,7 +8,7 @@ class DatabaseConnection:
         self.cursor = None
         self.connect()
 
-    def __enter(self):
+    def __enter__(self):
         self.connection = sqlite3.connect(self.db_name)
         self.cursor = self.connection.cursor()
         print("Connected to database"), self.db_name
