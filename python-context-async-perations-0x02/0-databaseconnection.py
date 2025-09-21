@@ -9,10 +9,9 @@ class DatabaseConnection:
         self.connect()
 
     def __enter__(self):
-        self.connection = sqlite3.connect(self.db_name)
-        self.cursor = self.connection.cursor()
-        print("Connected to database"), self.db_name
-        return self.cursor
+        self.connection = sqlite3.connect(self.db_path)
+        self.connection.row_factory = sqlite3.Row
+        return self.conn
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self.connection:
