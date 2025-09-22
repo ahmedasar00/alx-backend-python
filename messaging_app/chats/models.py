@@ -38,7 +38,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=150, null=False)
     email = models.EmailField(unique=True, null=False)
 
-    password_hash = models.CharField(max_length=255, null=False)
+    # REMOVED the custom 'password_hash' field.
+    # AbstractBaseUser provides a 'password' field automatically.
 
     phone_number = models.CharField(max_length=20, blank=True, null=True)
 
@@ -51,7 +52,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # Required by Django
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
@@ -60,18 +60,28 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    def set_password(self, raw_password):
-        from django.contrib.auth.hashers import make_password
-
-        self.password_hash = make_password(raw_password)
-
-    def check_password(self, raw_password):
-        from django.contrib.auth.hashers import check_password
-
-        return check_password(raw_password, self.password_hash)
+    # REMOVED the custom set_password and check_password methods.
+    # The parent classes handle this automatically.
 
     def __str__(self):
         return f"{self.email} ({self.role})"
+
+    # MOVED these fields to the class level (correct indentation).
+    groups = models.ManyToManyField(
+        "auth.Group",
+        related_name="chat_users",
+        blank=True,
+        help_text="The groups this user belongs to...",
+        verbose_name="groups",
+    )
+
+    user_permissions = models.ManyToManyField(
+        "auth.Permission",
+        related_name="chat_user_permissions",
+        blank=True,
+        help_text="Specific permissions for this user.",
+        verbose_name="user permissions",
+    )
 
 
 # -------------------------------
@@ -96,7 +106,7 @@ class Message(models.Model):
 
     sender = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="sent_messages"
-    )
+    )  # (related_name = user_id ) == sent_messages
     conversation = models.ForeignKey(
         Conversation, on_delete=models.CASCADE, related_name="messages"
     )
