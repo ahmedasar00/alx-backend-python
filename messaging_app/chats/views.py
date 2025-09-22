@@ -40,7 +40,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
         if not participant_ids:
             return Response(
                 {"error": "At least one participant is required"},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         conversation = Conversation.objects.create()
