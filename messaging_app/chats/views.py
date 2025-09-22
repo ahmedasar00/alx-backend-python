@@ -2,6 +2,8 @@ from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
+from .permissions import IsParticipantOfConversation
+from rest_framework.permissions import IsAuthenticated
 
 from .models import Conversation, Message, User
 from .serializers import ConversationSerializer, MessageSerializer
@@ -13,6 +15,7 @@ from .serializers import ConversationSerializer, MessageSerializer
 class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
+    permission_classes = [IsParticipantOfConversation, IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ["participants__email"]  # allow filtering by participant email
 
@@ -51,6 +54,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
+    permission_classes = [IsParticipantOfConversation, IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ["message_body", "sender__email"]
 
