@@ -85,8 +85,8 @@ class MessageViewSet(viewsets.ModelViewSet):
         """
         Return only messages for the conversation specified in the URL.
         """
-        conversation_pk = self.kwargs["conversation_pk"]
-        conversation = get_object_or_404(Conversation, pk=conversation_pk)
+        conversation_id = self.kwargs["conversation_pk"]
+        conversation = get_object_or_404(Conversation, pk=conversation_id)
 
         # Ensure the user is a participant
         if self.request.user not in conversation.participants.all():
@@ -99,7 +99,7 @@ class MessageViewSet(viewsets.ModelViewSet):
         Automatically set the conversation and sender for a new message.
         """
         conversation = get_object_or_404(
-            Conversation, pk=self.kwargs["conversation_pk"]
+            Conversation, pk=self.kwargs["conversation_id"]
         )
         if self.request.user not in conversation.participants.all():
             raise PermissionDenied("You are not a participant in this conversation.")
