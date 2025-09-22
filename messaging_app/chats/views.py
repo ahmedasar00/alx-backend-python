@@ -1,14 +1,14 @@
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, filters, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.shortcuts import get_object_or_404
-from .permissions import IsParticipantOfConversation
 from rest_framework.permissions import IsAuthenticated
-from .filters import ConversationFilter, MessageFilter
-from rest_framework.status import HTTP_403_FORBIDDEN
+from rest_framework.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404
 
 from .models import Conversation, Message, User
 from .serializers import ConversationSerializer, MessageSerializer
+from .permissions import IsParticipantOfConversation
+from .filters import ConversationFilter, MessageFilter
 
 
 # -------------------------------
@@ -17,10 +17,16 @@ from .serializers import ConversationSerializer, MessageSerializer
 class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
-    permission_classes = [IsParticipantOfConversation, IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     filter_backends = [filters.SearchFilter]
-    search_fields = ["participants__email"]  # allow filtering by participant email
+    search_fields = ["participants__email"]  # search by participant email
     filterset_class = ConversationFilter
+
+    def get_queryset(self):
+        """
+        Return only the conversations that the current authenticated user participates in.
+        """
+        return Conversation.objects.filter(participants=self.request.user)
 
     def create(self, request, *args, **kwargs):
         """
@@ -34,19 +40,30 @@ class ConversationViewSet(viewsets.ModelViewSet):
         if not participant_ids:
             return Response(
                 {"error": "At least one participant is required"},
-                status=status.HTTP_403_FORBIDDEN,
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         conversation = Conversation.objects.create()
         conversation.participants.set(User.objects.filter(user_id__in=participant_ids))
+
+        # Add the current user automatically to the conversation
+        conversation.participants.add(request.user)
+
         serializer = self.get_serializer(conversation)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["get"])
     def messages(self, request, pk=None):
-        """Custom endpoint: Get all messages in a conversation"""
+        """
+        Custom endpoint: Get all messages in a conversation.
+        """
         conversation = self.get_object()
-        messages = conversation.messages.all()
+
+        # Ensure the current user is a participant
+        if request.user not in conversation.participants.all():
+            raise PermissionDenied("You are not a participant in this conversation.")
+
+        messages = conversation.messages.all().order_by("-timestamp")  # newest first
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
@@ -57,39 +74,34 @@ class ConversationViewSet(viewsets.ModelViewSet):
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    permission_classes = [IsParticipantOfConversation, IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     filter_backends = [filters.SearchFilter]
     search_fields = ["message_body", "sender__email"]
     filterset_class = MessageFilter
+    ordering_fields = ["timestamp"]
+    ordering = ["-timestamp"]  # newest message first
 
-    def create(self, request, *args, **kwargs):
+    def get_queryset(self):
         """
-        Send a message to an existing conversation.
-        Example payload:
-        {
-            "conversation_id": "uuid",
-            "sender_id": "uuid",
-            "message_body": "Hello world!"
-        }
+        Return only messages for the conversation specified in the URL.
         """
-        conversation_id = request.data.get("conversation_id")
-        sender_id = request.data.get("sender_id")
-        message_body = request.data.get("message_body")
+        conversation_pk = self.kwargs["conversation_pk"]
+        conversation = get_object_or_404(Conversation, pk=conversation_pk)
 
-        if not conversation_id or not sender_id or not message_body:
-            return Response(
-                {"error": "conversation_id, sender_id, and message_body are required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # Ensure the user is a participant
+        if self.request.user not in conversation.participants.all():
+            raise PermissionDenied("You are not a participant in this conversation.")
 
-        conversation = get_object_or_404(Conversation, conversation_id=conversation_id)
-        sender = get_object_or_404(User, user_id=sender_id)
+        return Message.objects.filter(conversation=conversation)
 
-        message = Message.objects.create(
-            conversation=conversation,
-            sender=sender,
-            message_body=message_body,
+    def perform_create(self, serializer):
+        """
+        Automatically set the conversation and sender for a new message.
+        """
+        conversation = get_object_or_404(
+            Conversation, pk=self.kwargs["conversation_pk"]
         )
+        if self.request.user not in conversation.participants.all():
+            raise PermissionDenied("You are not a participant in this conversation.")
 
-        serializer = self.get_serializer(message)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer.save(conversation=conversation, sender=self.request.user)
