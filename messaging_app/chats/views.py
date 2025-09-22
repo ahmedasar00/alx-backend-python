@@ -20,6 +20,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsParticipantOfConversation, IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ["participants__email"]  # allow filtering by participant email
+    filterset_class = ConversationFilter
 
     def create(self, request, *args, **kwargs):
         """
@@ -59,6 +60,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = [IsParticipantOfConversation, IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ["message_body", "sender__email"]
+    filterset_class = MessageFilter
 
     def create(self, request, *args, **kwargs):
         """
