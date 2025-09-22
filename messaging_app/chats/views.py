@@ -4,6 +4,8 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from .permissions import IsParticipantOfConversation
 from rest_framework.permissions import IsAuthenticated
+from .filters import ConversationFilter, MessageFilter
+from rest_framework.status import HTTP_403_FORBIDDEN
 
 from .models import Conversation, Message, User
 from .serializers import ConversationSerializer, MessageSerializer
@@ -31,7 +33,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
         if not participant_ids:
             return Response(
                 {"error": "At least one participant is required"},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         conversation = Conversation.objects.create()
