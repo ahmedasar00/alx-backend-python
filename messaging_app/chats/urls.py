@@ -17,5 +17,5 @@ conversations_router.register(
 
 urlpatterns = [
     path("", include(router.urls)),
-    path("", include(conversations_router.urls)),
+    path("conversations", include(conversations_router.urls)),
 ]
