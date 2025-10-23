@@ -19,6 +19,9 @@ class Message(models.Model):
     read = models.BooleanField(default=False)
     unread = UnreadMessageManager()  # Custom manager for unread messages.
     objects = models.Manager()  # The default manager.
+    parent_message = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.CASCADE, related_name="replies"
+    )
 
     def __str__(self):
         return f"Message from {self.sender} to {self.receiver} at {self.timestamp}"
