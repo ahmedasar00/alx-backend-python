@@ -1,5 +1,5 @@
 from rest_framework import ModelSerializer, SerializerMethodField
-from .models import *
+from .models import Message
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -7,7 +7,7 @@ User = get_user_model()
 
 class MessageSerializer(ModelSerializer):
     sender = SerializerMethodField()
-    reciver = SerializerMethodField
+    receiver = SerializerMethodField()
 
     class Meta:
         model = Message
