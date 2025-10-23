@@ -5,8 +5,8 @@ from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
 from .models import Message
 from .serializers import MessageSerializer
-
 from rest_framework.generics import ListAPIView
+
 
 User = get_user_model()
 
@@ -50,3 +50,18 @@ class ThreadedConversation(APIView):
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class UnreadMessagesListView(ListAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Message.unread.unread_for_user(self.request.user).only(
+            "id", "sender", "receiver", "content", "timestamp", "read"
+        )
+        return queryset
+
+
+Feat: manager in your views to display only unread messages in a user’s inbox 
+Optimize this query with .only() to retrieve only necessary fields.
