@@ -5,7 +5,7 @@ from django.conf import settings
 from .managers import UnreadMessageManager
 
 
-class Message(models.Modle):
+class Message(models.Model):
     sender = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_messages"
     )
@@ -17,12 +17,11 @@ class Message(models.Modle):
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
-
-    objects = models.Manager()  # The default manager.
     unread = UnreadMessageManager()  # Custom manager for unread messages.
+    objects = models.Manager()  # The default manager.
 
     def __str__(self):
-        return f"Message from {self.sender} to {self.recipient} at {self.timestamp}"
+        return f"Message from {self.sender} to {self.receiver} at {self.timestamp}"
 
 
 class Notification(models.Model):
