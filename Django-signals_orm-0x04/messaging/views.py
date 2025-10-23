@@ -6,6 +6,9 @@ from django.contrib.auth import get_user_model
 from .models import Message
 from .serializers import MessageSerializer
 from rest_framework.generics import ListAPIView
+from django.views.decorators.cache import cache_page
+import time
+from django.http import JsonResponse
 
 
 User = get_user_model()
@@ -63,5 +66,12 @@ class UnreadMessagesListView(ListAPIView):
         return queryset
 
 
-Feat: manager in your views to display only unread messages in a user’s inbox 
-Optimize this query with .only() to retrieve only necessary fields.
+@cache_page(60)
+def cached_message_list_view(request):
+    time.sleep(2)
+
+    messages = Message.objects.all().values(
+        "id", "sender__username", "receiver__username", "content", "timestamp"
+    )
+
+    return JsonResponse(list(messages), safe=False)
