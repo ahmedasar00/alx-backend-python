@@ -9,7 +9,7 @@ class Message(models.Modle):
     sender = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_messages"
     )
-    recipient = models.ForeignKey(
+    receiver = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="received_messages",
