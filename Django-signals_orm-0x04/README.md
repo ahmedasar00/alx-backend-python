@@ -201,7 +201,7 @@ Caching saves the results of expensive operations to improve performance. Django
 
 **Goal:** Add caching to improve performance in message views.
 
-- Configure cache in `settings.py`:
+- Configure cache in `settings.py`:.
 
 ```python
 CACHES = {

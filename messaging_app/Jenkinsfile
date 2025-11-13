@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                
+                git branch: 'main',
+                    credentialsId: 'github-credentials',
+                    url: 'https://github.com/ahmedasar00/alx-backend-python/tree/main/messaging_app'
+            }
+        }
+
+        stage('Install dependencies') {
+            steps {
+                // تفعيل بيئة Python
+                withPythonEnv('python3') {
+                    sh '''
+                        pip install --upgrade pip
+                        pip install -r messaging_app/requirements.txt
+                    '''
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                
+                sh '''
+                    cd messaging_app
+                    pytest --junitxml=report.xml
+                '''
+            }
+        }
+
+        stage('Publish Report') {
+            steps {
+                
+                junit 'messaging_app/report.xml'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline Finished!'
+        }
+        success {
+            echo 'All tests passed successfully ✅'
+        }
+        failure {
+            echo 'Some tests failed ❌'
+        }
+    }
+}
