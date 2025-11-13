@@ -4,7 +4,6 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                
                 git branch: 'main',
                     credentialsId: 'github-credentials',
                     url: 'https://github.com/ahmedasar00/alx-backend-python/tree/main/messaging_app'
@@ -13,7 +12,6 @@ pipeline {
 
         stage('Install dependencies') {
             steps {
-                // تفعيل بيئة Python
                 withPythonEnv('python3') {
                     sh '''
                         pip install --upgrade pip
@@ -25,7 +23,6 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                
                 sh '''
                     cd messaging_app
                     pytest --junitxml=report.xml
@@ -35,7 +32,6 @@ pipeline {
 
         stage('Publish Report') {
             steps {
-                
                 junit 'messaging_app/report.xml'
             }
         }
@@ -46,10 +42,10 @@ pipeline {
             echo 'Pipeline Finished!'
         }
         success {
-            echo 'All tests passed successfully ✅'
+            echo 'All tests passed successfully'
         }
         failure {
-            echo 'Some tests failed ❌'
+            echo 'Some tests failed'
         }
     }
 }
