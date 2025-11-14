@@ -2,22 +2,21 @@ pipeline {
     agent any
 
     stages {
+
         stage('Checkout') {
             steps {
                 git branch: 'main',
                     credentialsId: 'github-credentials',
-                    url: 'https://github.com/ahmedasar00/alx-backend-python/tree/main/messaging_app'
+                    url: 'https://github.com/ahmedasar00/alx-backend-python.git'
             }
         }
 
         stage('Install dependencies') {
             steps {
-                withPythonEnv('python3') {
-                    sh '''
-                        pip install --upgrade pip
-                        pip install -r messaging_app/requirements.txt
-                    '''
-                }
+                sh '''
+                    pip3 install --upgrade pip
+                    pip3 install -r messaging_app/requirements.txt
+                '''
             }
         }
 
@@ -38,14 +37,8 @@ pipeline {
     }
 
     post {
-        always {
-            echo 'Pipeline Finished!'
-        }
-        success {
-            echo 'All tests passed successfully'
-        }
-        failure {
-            echo 'Some tests failed'
-        }
+        always { echo 'Pipeline Finished!' }
+        success { echo 'All tests passed successfully' }
+        failure { echo 'Some tests failed' }
     }
 }
