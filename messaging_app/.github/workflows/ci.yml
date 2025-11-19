@@ -1,4 +1,4 @@
-name: Messaging_app CI - Tests & Code Quality
+name: messaging_app CI - Tests & Code Quality
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_DATABASE: messaging_test_db
+          MYSQL_DATABASE: messaging_test_db_Test_Test_Test
           MYSQL_ROOT_PASSWORD: root
         ports:
           - 3306:3306
