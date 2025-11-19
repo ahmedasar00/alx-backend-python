@@ -1,0 +1,61 @@
+name: Messaging_app CI - Tests & Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Tests & Code Quality Checks
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: messaging_test_db
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install Dependencies
+        run: |
+          pip install -r messaging_app/requirements.txt
+          pip install flake8 coverage
+
+
+      - name: Run flake8 Linting
+        run: |
+          cd messaging_app
+          flake8 .
+       
+
+      - name: Run Django Tests with Coverage
+        run: |
+          cd messaging_app
+          coverage run manage.py test
+          coverage xml
+          coverage report
+
+
+      - name: Upload Coverage Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: messaging_app/coverage.xml
